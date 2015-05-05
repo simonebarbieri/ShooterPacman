@@ -3,23 +3,21 @@
 //  Missile Pacman
 //
 //  Created by Simone Barbieri on 19/08/11.
-//  Copyright 2011 odioillatino. All rights reserved.
+//  Copyright 2011 Simone Barbieri. All rights reserved.
 //
 
 #include "header.h"
 
-extern char labirinto[RIGHE][COLONNE];	// Il missile vede il labirinto aggiornato fino al momento in cui si fa la fork(). Se si aggiorna il labirinto successivamente, il missile non vede la modifica.
+// The missile has a copy of the labyrinth updated up to the moment the fork() is executed
+extern char labirinto[RIGHE][COLONNE];
 
-/***********************************************************************************
- /																					/
- /	Funzione che gestisce i missili.												/
- /																					/
- ***********************************************************************************/
-void funzioneMissile ( int pipeAlControllo, direzione direzioneMissile, coordinata posizioneIniziale, int idMissile, char creatore ){
-	
+// Missiles handling
+void funzioneMissile ( int pipeAlControllo, direzione direzioneMissile, coordinata posizioneIniziale, int idMissile, char creatore )
+{	
 	personaggio missile;
 	int err;
 	
+	// Initialization of the missile variable
 	missile.identificatore = 'M';
 	missile.movimento = direzioneMissile;
 	missile.posizione.x = posizioneIniziale.x + missile.movimento.direzionex;
@@ -29,19 +27,21 @@ void funzioneMissile ( int pipeAlControllo, direzione direzioneMissile, coordina
 	missile.morto = 0;
 	missile.creatore = creatore;
 	
+	// Write the missile in a pipe
 	write( pipeAlControllo, &missile, sizeof(missile) );
 	
 	usleep( VELOCITA_MISSILI );
 	
-	while ( posizioneSuccessivaConsentitaMissili( missile.posizione.x + missile.movimento.direzionex, missile.posizione.y + missile.movimento.direzioney ) ) {
-		
+	// Compute the new position of the missile until it reach a not allowed position 
+	while ( posizioneSuccessivaConsentitaMissili( missile.posizione.x + missile.movimento.direzionex, missile.posizione.y + missile.movimento.direzioney ) )
+	{	
 		missile.posizione.x += missile.movimento.direzionex;
 		missile.posizione.y += missile.movimento.direzioney;
 		
+		// Writes the updated missile's position
 		write( pipeAlControllo, &missile, sizeof(missile) );
 		
-		usleep( VELOCITA_MISSILI );
-		
+		usleep( VELOCITA_MISSILI );	
 	}
 	
 	missile.morto = 1;
@@ -49,48 +49,34 @@ void funzioneMissile ( int pipeAlControllo, direzione direzioneMissile, coordina
 	write( pipeAlControllo, &missile, sizeof(missile) );
 	
 	err = kill( missile.pid, 1);
-	while ( err != 0 ) {
-		
-		err = kill( missile.pid, 1 );
-		
-	}
 	
+	while ( err != 0 )
+	{	
+		err = kill( missile.pid, 1 );	
+	}
 }
 
-/***********************************************************************************
- /																					/
- /	Controlla se il missile puo' muoversi nella casella selezionata.				/
- /																					/
- ***********************************************************************************/
-int posizioneSuccessivaConsentitaMissili ( int x, int y ){
-	
-	switch ( labirinto[y][x] ) {
-			
+// Check if the missile can move in the selected position
+int posizioneSuccessivaConsentitaMissili ( int x, int y )
+{
+	switch ( labirinto[y][x] )
+	{		
 		case ' ':
 			return 1;
-			
 		default:
-			return 0;
-			
+			return 0;		
 	}
-	
 }
 
-/***********************************************************************************
- /																					/
- /	Funzione che genera i missili.													/
- /																					/
- ***********************************************************************************/
-void generaMissile ( int pipeAlControllo, direzione direzioneMissile, coordinata posizioneIniziale, int idMissile, char creatore ){
-	
-	switch ( fork() ) {
-			
+// Generates a missile
+void generaMissile ( int pipeAlControllo, direzione direzioneMissile, coordinata posizioneIniziale, int idMissile, char creatore )
+{	
+	switch ( fork() )
+	{		
 		case -1:
 			perror( "ERRORE 009: la fork non e' stata eseguita correttamente.");
-			exit( 1 );
-			
+			exit( 1 );		
 		case 0:
 			funzioneMissile( pipeAlControllo, direzioneMissile, posizioneIniziale, idMissile, creatore );
 	}
-	
 }

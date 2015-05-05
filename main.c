@@ -3,51 +3,46 @@
 //  Missile Pacman
 //
 //  Created by Simone Barbieri on 18/08/11.
-//  Copyright 2011 odioillatino. All rights reserved.
+//  Copyright 2011 Simone Barbieri. All rights reserved.
 //
 
 #include "header.h"
 
-int main ( void ){
+int main (void)
+{
+	// Initialize the variables
+	initialization();
 
-	initialization();		// Inizializza lo schermo
-
-	menu();					// Mostra il menu
+	// Shows the menu
+	menu();					
 
 	endwin();
 
 	return 0;
-
 }
 
-/***********************************************************************************
- /																					/
- /	Funzione che stampa il menu.													/
- /																					/
- ***********************************************************************************/
-void menu ( void ){
-
+// Prints the menu
+void menu ( void )
+{
 	char c = 'a';
 	int i, j;
 
-	while ( c != 'q' && c != 'Q' ) {
-
+	while ( c != 'q' && c != 'Q' )
+	{
 		attron( COLOR_PAIR( SCRITTE ) );
 
-		// Viene colorato lo schermo di blu.
-		for ( i = 0; i < RIGHE; i++ ) {
-
-			for ( j = 0; j < COLONNE + 7; j++ ) {
-
+		// The screen is colored in blue
+		for ( i = 0; i < RIGHE; i++ )
+		{
+			for ( j = 0; j < COLONNE + 7; j++ )
+			{
 				printw( " " );
-
 			}
 
 			printw( "\n" );
-
 		}
 
-		// Disegno il logo di Pac-Man
+		// Prints the Pac-Man logo
 		mvprintw( 0, 1, " ____                                                        " );
 		mvprintw( 1, 1, "/\\  _`\\                         /'\\_/`\\                      " );
 		mvprintw( 2, 1, "\\ \\ \\L\\ \\ __      ___          /\\      \\     __      ___     " );
@@ -56,7 +51,7 @@ void menu ( void ){
 		mvprintw( 5, 1, "   \\ \\_\\ \\__/.\\_\\ \\____\\/______/ \\ \\_\\\\ \\_\\ \\__/.\\_\\ \\_\\ \\_\\ " );
 		mvprintw( 6, 1, "    \\/_/\\/__/\\/_/\\/____/          \\/_/ \\/_/\\/__/\\/_/\\/_/\\/_/ \n" );
 		
-		// Stampo il menu.
+		// Prints the menu
 		mvprintw( 10, 25, "BENVENUTO!" );
 		mvprintw( 14, 16, "Scegli cosa fare:" );
 		mvprintw( 16, 16, "[P] Gioca" );
@@ -66,37 +61,37 @@ void menu ( void ){
 
 		refresh();
 
-		scanf( "%c", &c );	// Salvo la selezione della voce del menu nella variabile "c".
+		// Save in "c" variable the menu item selected
+		scanf( "%c", &c );
 
-		switch ( c ) {
+		switch ( c )
+		{
 			case 'p':
 			case 'P':
 				clear();
 				control();
 				break;
-
 			default:
 				break;
-
 		}
 
 	}
 
 }
 
-/***********************************************************************************
- /																					/
- /	Funzione che inizializza lo schermo e imposta diverse caratteristiche.			/
- /																					/
- ***********************************************************************************/
-void initialization ( void ){
+// Initialization fuction
+void initialization ( void )
+{
+	// Create a curses window
+	initscr();
+	// Disable the printing of the pressed keys
+	noecho();
+	// Disable the cursor
+	curs_set( 0 );
+	// Colors the screen
+	start_color();
 
-	initscr();		// Crea una finestra di curses.
-	noecho();		// Non fa visualizzare a schermo il tasto premuto
-	curs_set( 0 );	// Non fa visualizzare il cursore
-	start_color();	// Colora lo schermo
-
-	// Inizializzazione dei colori
+	// Colors initialization
 	init_pair( LABIRINTO, COLOR_BLUE, COLOR_BLACK );
 	init_pair( PACMAN, COLOR_YELLOW, COLOR_BLACK );
 	init_pair( FANTASMA1, COLOR_RED, COLOR_BLACK );
@@ -106,72 +101,57 @@ void initialization ( void ){
 	init_pair( SCRITTE, COLOR_YELLOW, COLOR_BLUE );
 
 	srand( (int) time( NULL ) );
-
 }
 
-/***********************************************************************************
- /																					/
- /	Inserisce un elemento in una lista concatenata.									/
- /																					/
- ***********************************************************************************/
-void inserisciNellaLista ( list_pointer *testa, personaggio elemento ){
-
+// Insert an element in a linked list
+void inserisciNellaLista ( list_pointer *testa, personaggio elemento )
+{
 	list_pointer ii, temp;
 
-	if ( *testa == NULL ) {
-
+	if ( *testa == NULL )
+	{
 		temp = (list_pointer) malloc( sizeof( struct nodo ) );
 		temp->elemento = elemento;
 		temp->link = NULL;
 		*testa = temp;
-
-	} else {
-
+	} 
+	else
+	{
 		for ( ii = *testa; ii->link != NULL; ii = ii->link);
 
 		ii->link = (list_pointer) malloc( sizeof( struct nodo ) );
 		ii->link->elemento = elemento;
 		ii->link->link = NULL;
-
 	}
-
 }
 
-/***********************************************************************************
- /																					/
- /	Cancella un elemento dalla lista.												/
- /																					/
- ***********************************************************************************/
-void cancellaDallaLista ( list_pointer *testa, personaggio elemento ) {
-
+// Remove an element from a linked list
+void cancellaDallaLista ( list_pointer *testa, personaggio elemento )
+{
 	list_pointer ii, temp;
 
-	if ( (*testa)->elemento.idPersonaggio == elemento.idPersonaggio ) {
-
+	if ( (*testa)->elemento.idPersonaggio == elemento.idPersonaggio )
+	{
 		temp = *testa;
 		*testa = (*testa)->link;
 		free( temp );
-
-	} else {
-
-		for ( ii = *testa; ii != NULL && ii->elemento.idPersonaggio != elemento.idPersonaggio; ii = ii->link ){
-
+	} 
+	else
+	{
+		for ( ii = *testa; ii != NULL && ii->elemento.idPersonaggio != elemento.idPersonaggio; ii = ii->link )
+		{
 			temp = ii;
-
 		}
 
-		if ( ii == NULL ) {
-
+		if ( ii == NULL )
+		{
 			perror( "ERRORE 004: l'elemento non e' nella lista." );
 			exit( 1 );
-
-		} else {
-
+		} 
+		else 
+		{
 			temp->link = ii->link;
 			free( ii );
-
 		}
-
 	}
-
 }

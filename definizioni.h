@@ -3,10 +3,10 @@
 //  Missile Pacman
 //
 //  Created by Simone Barbieri on 18/08/11.
-//  Copyright 2011 odioillatino. All rights reserved.
+//  Copyright 2011 Simone Barbieri. All rights reserved.
 //
 
-// Define per i tasti.
+// Keyboard Keys settings
 #define SU							65
 #define GIU							66
 #define DESTRA						67
@@ -16,7 +16,7 @@
 #define RIGHE						31
 #define COLONNE						55
 
-// Define che indicano dove stampare le informazioni di gioco.
+// Print informations locations settings
 #define INFO_VITE					RIGHE + 3
 #define INFO_ENERGIA				INFO_VITE + 2
 #define INFO_PUNTEGGIO				0
@@ -24,9 +24,9 @@
 #define COLONNA_ENERGIA				COLONNA_VITE
 #define COLONNA_FRUTTA				20
 #define COLONNA_PUNTEGGIO			COLONNA_VITE
-#define COLONNA_HIGH_SCORE			COLONNE - COLONNA_VITE - 10	// Il -10 è per la lunghezza della parola HIGH SCORE, per creare simmetria.
+#define COLONNA_HIGH_SCORE			COLONNE - COLONNA_VITE - 10	// The -10 is for the length of the "HIGH SCORE" label
 
-// Informazioni di gioco.
+// Game settings
 #define VITE_INIZIALI				3
 #define PUNTO_STANDARD				10
 #define PUNTO_POWERPILL				50
@@ -38,7 +38,7 @@
 #define WRITE						1
 #define READ						0
 
-// Define per le coppie di colori.
+// Colors settings
 #define FANTASMA1					1
 #define FANTASMA2					2
 #define FANTASMA3					3
@@ -47,11 +47,11 @@
 #define PACMAN						6
 #define SCRITTE						7
 
-// Define di Pac-Man
+// Pacman settings
 #define RIGA_INIZIALE_PACMAN		23
 #define COLONNA_INIZIALE_PACMAN		26
 
-// Define dei fantasmi.
+// Ghost settings
 #define FANTASMI					4
 #define MAX_FANTASMI				FANTASMI * 2
 #define PASSI_CREAZIONE_FANTASMA	50
@@ -65,7 +65,7 @@
 #define RIGA_SEZIONE_CENTRALE		14 + 2
 #define COLONNA_SEZIONE_CENTRALE	24
 
-// Define dei missili.
+// Missiles settings
 #define MISSILI						4
 #define MISSILE_SU					0
 #define MISSILE_GIU					1

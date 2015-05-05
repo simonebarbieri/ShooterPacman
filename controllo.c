@@ -3,54 +3,61 @@
 //  Missile Pacman
 //
 //  Created by Simone Barbieri on 18/08/11.
-//  Copyright 2011 odioillatino. All rights reserved.
+//  Copyright 2011 Simone Barbieri. All rights reserved.
 //
 
 #include "header.h"
 #include "labirinto.h"
 
-/***********************************************************************************
- /																					/
- /	Funzione di controllo del gioco.												/
- /																					/
- ***********************************************************************************/
-void control ( void ){
-	
-	personaggio pacman, personaggioLetto;	// Variabili in cui sono salvati tutti i personaggi, e l'ultimo e' il personaggio che viene letto dalla pipe
+// Control function
+void control ( void )
+{	
+	// The characters (personaggioLetto is the character read from the pipe)
+	personaggio pacman, personaggioLetto;
 	infoFantasmi info[MAX_FANTASMI];
-	int vittoria, vite = VITE_INIZIALI, punteggio = 0;	// Variabili di gioco: la prima indica la vittoria se uguale a zero, la seconda le vite disponibili, la terza il punteggio
-    int counterCreazioneFantasma = rand() % PASSI_CREAZIONE_FANTASMA, counterRespownFantasma[MAX_FANTASMI];	// Variabile che decide casualmente quanti pallini deve mangiare Pac-Man prima di far comparire un fantasma
-	int numeroFantasmi, numeroMissili;	// Variabile che contiene il numero di fantasmi in gioco
-	int pipeDaiPersonaggi[2], pipeAiFantasmi[MAX_FANTASMI][2];	// 
-	int i, j;	// Contatori
-	int err;	// Variabile di supporto per controllare se ci sono errori uccidendo processi.
-	int energia;	// Variabile che indica quanta energia rimane a Pac-Man prima di essere ucciso dai missili dei fantasmi.
-	int highScore;	// Variabile in cui e' contenuto il record.
-	int elementoNonTrovato;	// Variabile che serve per sapere se l'elemento letto e' da inserire nella lista.
-	int fantasmi[MAX_FANTASMI];	// Indica se il fantasma esiste o no.
-	char labirintoBackup[RIGHE][COLONNE];	// Un labirinto in cui e' contenuta la copia del labirinto iniziale, per riiniziare il gioco a fine livello.
-	list_pointer listaFantasmi = NULL, listaMissili = NULL;	// Liste che contengono i fantasmi e i missili
-	list_pointer ptr1 = NULL, ptr2 = NULL;	// Elemento di supporto per scorrere le liste
-	direzione direzioni[MISSILI];	// Un array contenente tutte le direzioni possibili.
-	coordinata posizioneInizialeFantasma;	// Indica la posizione da cui deve ripartire un fantasma che e' stato ucciso.
-	FILE *score;	// Un puntatore al file in cui e' salvato il punteggio.
+	// Game variables
+	int vittoria, vite = VITE_INIZIALI, punteggio = 0;
+	// The number of steps that pacman must walk before a ghost is generated
+    int counterCreazioneFantasma = rand() % PASSI_CREAZIONE_FANTASMA, counterRespownFantasma[MAX_FANTASMI];
+	// The number of ghosts and missiles in game
+	int numeroFantasmi, numeroMissili;
+	int pipeDaiPersonaggi[2], pipeAiFantasmi[MAX_FANTASMI][2]; 
+	int i, j;
+	// Support number for any error
+	int err;
+	// Pacman energy before it dies with a missile
+	int energia;
+	int highScore;
+	int elementoNonTrovato;
+	// Indicates whether the ghost exists or it does not
+	int fantasmi[MAX_FANTASMI];
+	// A backup of the original labyrith
+	char labirintoBackup[RIGHE][COLONNE];
+	// Lists of the ghosts and missiles
+	list_pointer listaFantasmi = NULL, listaMissili = NULL;
+	// Elements to browse the lists
+	list_pointer ptr1 = NULL, ptr2 = NULL;
+	// An array with the possible directions
+	direzione direzioni[MISSILI];
+	// The respawn position of the ghost
+	coordinata posizioneInizialeFantasma;
+	// The score file
+	FILE *score;
 	
 	pacman.quit = 0;
 	
-	// Lettura dal file per il punteggio massimo.
+	// Reading of the high score from the file
 	score = fopen( FILE_PUNTEGGIO, "r" );
-	if ( score == NULL ) {
-		
+	if ( score == NULL )
+	{	
 		score = fopen( FILE_PUNTEGGIO, "w" );
 		fprintf( score, "10000" );
-		fclose( score );
-		
+		fclose( score );	
 	}
 	score = fopen( FILE_PUNTEGGIO, "r" );
-	while ( !feof(score) ) {
-		
-		fscanf( score, "%d", &highScore);
-		
+	while ( !feof(score) )
+	{	
+		fscanf( score, "%d", &highScore);	
 	}
 	fclose( score );
 	
@@ -66,54 +73,48 @@ void control ( void ){
 	direzioni[MISSILE_SINISTRA].direzionex = -2;
 	direzioni[MISSILE_SINISTRA].direzioney = 0;
 	
-	// Copia del labirinto per il ripristino alla fine del livello.
-	for ( i = 0; i < RIGHE; i++ ) {
-		
-		for ( j = 0; j < COLONNE; j++ ){
-			
-			labirintoBackup[i][j] = labirinto[i][j];	// Creo un backup del labirinto per partite future.
-			
+	// Backup of the labyrinth to restore it at the end of the level
+	for ( i = 0; i < RIGHE; i++ )
+	{	
+		for ( j = 0; j < COLONNE; j++ )
+		{	
+			labirintoBackup[i][j] = labirinto[i][j];	
 		}
-		
 	}
 	
-	// Inizializzazione delle pipes.
-	if ( pipe( pipeDaiPersonaggi ) == -1 ){	// Inizializzazione della pipe
-		
+	// Pipes initualization
+	if ( pipe( pipeDaiPersonaggi ) == -1 )
+	{	
 		perror( "ERRORE 005: la pipe non e' stata creata correttamente." );
-		exit( 1 );
-		
+		exit( 1 );	
 	}
-	for ( i = 0; i < MAX_FANTASMI; i++ ){
-		
-		if ( pipe( pipeAiFantasmi[i] ) == -1 ){
-			
+	
+	for ( i = 0; i < MAX_FANTASMI; i++ )
+	{	
+		if ( pipe( pipeAiFantasmi[i] ) == -1 )
+		{	
 			perror( "ERRORE 006: la pipe non e' stata creata correttamente." );
-			exit( 1 );
-			
+			exit( 1 );	
 		}
-		
 	}
 	
-	// Inizializzazione array per il rimbalzo dei fantasmi.
-	for ( i = 0; i < MAX_FANTASMI; i++ ) {
-		
-		info[i].rimbalzo = 0;
-		
+	// Initialization of the array to make the ghost change direction in the case they cross another one's path
+	for ( i = 0; i < MAX_FANTASMI; i++ )
+	{	
+		info[i].rimbalzo = 0;	
 	}
 	
-	do {
-		
-		// Inizializzazione array per il respown dei fantasmi.
-		for ( i = 0; i < MAX_FANTASMI; i++ ) {
-			
+	do
+	{	
+		// Array initialization for the respawn of the ghosts
+		for ( i = 0; i < MAX_FANTASMI; i++ )
+		{	
 			counterRespownFantasma[i] = -1;
 			info[i].powerPill = 0;
-			fantasmi[i] = 0;
-			
+			fantasmi[i] = 0;	
 		}
 		
-		// Reinizializzo le variabili che vanno ripristinate a ogni livello.
+		// Initialization of the variables that must be resetted each level
 		numeroMissili = 0;
 		numeroFantasmi = 0;
 		energia = MAX_ENERGIA;
@@ -122,529 +123,494 @@ void control ( void ){
 		stampaMuri();
 		attroff( COLOR_PAIR( LABIRINTO ) );
 		
-		generaPacman( pipeDaiPersonaggi );	// Generazione del primo Pac-Man
+		// Generates pacman
+		generaPacman( pipeDaiPersonaggi );
 		
-		do{
+		do
+		{	
+			// Read a character from the pipe
+			read( pipeDaiPersonaggi[READ], &personaggioLetto, sizeof( personaggioLetto ) );
 			
-			read( pipeDaiPersonaggi[READ], &personaggioLetto, sizeof( personaggioLetto ) );	// Legge dalla pipe un personaggio
-			
-			// Aggiorno l'array respown.
-			for ( i = 0; i < MAX_FANTASMI; i++ ) {
-				
-				counterRespownFantasma[i]--;
-				
+			// Update the respawn array
+			for ( i = 0; i < MAX_FANTASMI; i++ )
+			{	
+				counterRespownFantasma[i]--;	
 			}
 			
-			// Genero un numero casuale di passi dopo i quali verra' generato un fantasma.
-			if ( counterCreazioneFantasma <= 0 && numeroFantasmi < FANTASMI ) {	// Se e' gia' stato creato un fantasma e il numero dei fantasmi in gioco e' minore del numero di fantasmi massimo, allora crea un fantasma
-				
-				counterCreazioneFantasma = rand() % PASSI_CREAZIONE_FANTASMA;
-				
+			// Generates a random number of steps after which a ghost will be created
+			// only if the number of ghost currently in game is less of the maximum
+			// numeber of ghosts
+			if ( counterCreazioneFantasma <= 0 && numeroFantasmi < FANTASMI )
+			{	
+				counterCreazioneFantasma = rand() % PASSI_CREAZIONE_FANTASMA;	
 			}
 			
-			// Azioni da intraprendere a seconda del personaggio letto.
-			if ( personaggioLetto.identificatore == 'P' ) {
+			// Check what character read from the pipe
+			if ( personaggioLetto.identificatore == 'P' )
+			{	
+				// If the read character is pacman, save it in the pacman variable 
+				pacman = personaggioLetto;
 				
-				pacman = personaggioLetto;	// salva nella variabile "pacman" il personaggio letto.
-				
-				// Azioni nel caso si abbia mangiato un puntino o una power pill.
-				if ( labirinto[pacman.posizione.y][pacman.posizione.x] == '.' || labirinto[pacman.posizione.y][pacman.posizione.x] == 'P' ){
-					
-					// Se ho mangiato una power pill, assegno 1 alla relativa variabile.
-					if ( labirinto[pacman.posizione.y][pacman.posizione.x] == 'P' ) {
-						
-						for ( i = 0; i < MAX_FANTASMI; i++ ) {
-							
-							if ( fantasmi[i] == 1 ) {
-								
-								info[i].powerPill = 1;
-								
+				// In case pacman ate a dot or a power pill
+				if ( labirinto[pacman.posizione.y][pacman.posizione.x] == '.' || labirinto[pacman.posizione.y][pacman.posizione.x] == 'P' )
+				{	
+					// If pacman ate a power pill, the ghosts will be notified
+					if ( labirinto[pacman.posizione.y][pacman.posizione.x] == 'P' )
+					{	
+						for ( i = 0; i < MAX_FANTASMI; i++ )
+						{	
+							if ( fantasmi[i] == 1 )
+							{	
+								info[i].powerPill = 1;	
 							}
-							
 						}
-						
 					}
 					
-					// Aggiorno il punteggio
-					if ( labirinto[pacman.posizione.y][pacman.posizione.x] == '.' ) {
-						
-						punteggio += PUNTO_STANDARD;
-						
-					} else {
-						
-						punteggio += PUNTO_POWERPILL;
-						
+					// Increase the score
+					if ( labirinto[pacman.posizione.y][pacman.posizione.x] == '.' )
+					{	
+						punteggio += PUNTO_STANDARD;	
+					}
+					else 
+					{	
+						punteggio += PUNTO_POWERPILL;	
 					}
 					
-					labirinto[pacman.posizione.y][pacman.posizione.x] = ' ';	// Aggiorniamo il labirinto togliendo il puntino mangiato
+					// Update the labyrinth
+					labirinto[pacman.posizione.y][pacman.posizione.x] = ' ';
 					
-					counterCreazioneFantasma--;	// Diminuisco di uno il numero di puntini da mangiare per creare il fantasma
-					
+					// Decrease the number of dots to eat before a new ghost is created
+					counterCreazioneFantasma--;
 				}
 				
-				// Se si e' premuto q durante il gioco, imposto le vite a -1 e si esce dal gioco.
-				if ( personaggioLetto.quit == 1 ) {
-					
-					vite = -1;
-					
+				// If "Q" key is pressed, the game will quit
+				if ( personaggioLetto.quit == 1 )
+				{	
+					vite = -1;	
 				}
-				
-			} else {	// Altrimenti, se era un fantasma, salva il personaggio letto nell'array di fantasmi, alla posizione indicata dall'id del fantasma
-				
-				if ( personaggioLetto.identificatore == 'F' ){
-					
+			}
+			else
+			{
+				if ( personaggioLetto.identificatore == 'F' )
+				{
+					// If the character is a ghost, save it in the ghost array
 					elementoNonTrovato = TRUE;
 					
-					// Scorro la lista dei fantasmi per trovare il fantasma letto.
-					for ( ptr1 = listaFantasmi; ptr1 != NULL; ptr1 = ptr1->link ) {
-						
-						// Se trovo il personaggio nella lista, assegno il personaggio letto al personaggio corrispondente.
-						if ( ptr1->elemento.idPersonaggio == personaggioLetto.idPersonaggio ) {
-							
+					// Browse the ghost list to find the one read
+					for ( ptr1 = listaFantasmi; ptr1 != NULL; ptr1 = ptr1->link )
+					{
+						// If the read character is on the list, the element in the list is updated
+						if ( ptr1->elemento.idPersonaggio == personaggioLetto.idPersonaggio )
+						{	
 							ptr1->elemento = personaggioLetto;
 							
 							elementoNonTrovato = FALSE;
-							
 						}
-						
 					}
 					
-					// Se non lo trovo nella lista, lo aggiungo e riscorro la lista.
-					if ( elementoNonTrovato == TRUE ) {
-						
+					// If the character is not in the list, it is added
+					if ( elementoNonTrovato == TRUE )
+					{	
 						inserisciNellaLista( &listaFantasmi, personaggioLetto );
 						
-						for ( ptr1 = listaFantasmi; ptr1 != NULL; ptr1 = ptr1->link ) {
-							
-							if ( ptr1->elemento.idPersonaggio == personaggioLetto.idPersonaggio ) {
-								
-								ptr1->elemento = personaggioLetto;
-								
+						for ( ptr1 = listaFantasmi; ptr1 != NULL; ptr1 = ptr1->link )
+						{	
+							if ( ptr1->elemento.idPersonaggio == personaggioLetto.idPersonaggio )
+							{	
+								ptr1->elemento = personaggioLetto;	
 							}
-							
 						}
-						
 					}
 					
-					//
-					// DA CORREGGERE
-					//
-					for ( ptr1 = listaFantasmi; ptr1 != NULL; ptr1 = ptr1->link ) {
-						
-						if ( personaggioLetto.idPersonaggio != ptr1->elemento.idPersonaggio && ( ( personaggioLetto.posizione.x + personaggioLetto.movimento.direzionex == ptr1->elemento.posizione.x && personaggioLetto.posizione.y + personaggioLetto.movimento.direzioney == ptr1->elemento.posizione.y ) || ( personaggioLetto.posizione.x + personaggioLetto.movimento.direzionex == ptr1->elemento.posizione.x + ptr1->elemento.movimento.direzionex && personaggioLetto.posizione.y + personaggioLetto.movimento.direzioney == ptr1->elemento.posizione.y + ptr1->elemento.movimento.direzioney ) || ( personaggioLetto.posizione.x == ptr1->elemento.posizione.x + ptr1->elemento.movimento.direzionex && personaggioLetto.posizione.y == ptr1->elemento.posizione.y + ptr1->elemento.movimento.direzioney ) ) ) {
-							
-							info[personaggioLetto.idPersonaggio].rimbalzo = 1;
-							
+					// Check if the ghost cross the path of another ghost and if it has to change direction
+					for ( ptr1 = listaFantasmi; ptr1 != NULL; ptr1 = ptr1->link )
+					{	
+						if ( personaggioLetto.idPersonaggio != ptr1->elemento.idPersonaggio &&
+							( personaggioLetto.posizione.x + personaggioLetto.movimento.direzionex == ptr1->elemento.posizione.x &&
+							  personaggioLetto.posizione.y + personaggioLetto.movimento.direzioney == ptr1->elemento.posizione.y ) ||
+							( personaggioLetto.posizione.x + personaggioLetto.movimento.direzionex == ptr1->elemento.posizione.x + ptr1->elemento.movimento.direzionex &&
+							  personaggioLetto.posizione.y + personaggioLetto.movimento.direzioney == ptr1->elemento.posizione.y + ptr1->elemento.movimento.direzioney ) || 
+							( personaggioLetto.posizione.x == ptr1->elemento.posizione.x + ptr1->elemento.movimento.direzionex &&
+							  personaggioLetto.posizione.y == ptr1->elemento.posizione.y + ptr1->elemento.movimento.direzioney ) ) 
+						{
+							info[personaggioLetto.idPersonaggio].rimbalzo = 1;	
 						}
-						
 					}
 					
+					// Write the ghost in a pipe
 					write( pipeAiFantasmi[personaggioLetto.idPersonaggio][WRITE], &info[personaggioLetto.idPersonaggio], sizeof( infoFantasmi ) );
 					
 					info[personaggioLetto.idPersonaggio].powerPill = 0;
 					info[personaggioLetto.idPersonaggio].rimbalzo = 0;
-					
-				} else {
-					
+				} 
+				else 
+				{
+					// If the character is a missile, we search it into the missile array
 					elementoNonTrovato = TRUE;
 					
-					for ( ptr1 = listaMissili; ptr1 != NULL; ptr1 = ptr1->link ) {
-						
-						if ( ptr1->elemento.idPersonaggio == personaggioLetto.idPersonaggio ) {
-							
+					for ( ptr1 = listaMissili; ptr1 != NULL; ptr1 = ptr1->link )
+					{	
+						if ( ptr1->elemento.idPersonaggio == personaggioLetto.idPersonaggio )
+						{	
 							ptr1->elemento = personaggioLetto;
 							
-							elementoNonTrovato = FALSE;
-							
+							elementoNonTrovato = FALSE;	
 						}
 						
-						if ( ptr1->elemento.morto == 1 ){
-							
-							cancellaDallaLista( &listaMissili, ptr1->elemento );
-							
+						if ( ptr1->elemento.morto == 1 )
+						{	
+							cancellaDallaLista( &listaMissili, ptr1->elemento );	
 						}
-						
 					}
 					
-					if ( elementoNonTrovato == TRUE ) {
-						
+					if ( elementoNonTrovato == TRUE )
+					{	
 						inserisciNellaLista( &listaMissili, personaggioLetto );
 						
-						for ( ptr1 = listaMissili; ptr1 != NULL; ptr1 = ptr1->link ) {
-							
-							if ( ptr1->elemento.idPersonaggio == personaggioLetto.idPersonaggio ) {
-								
-								ptr1->elemento = personaggioLetto;
-								
+						for ( ptr1 = listaMissili; ptr1 != NULL; ptr1 = ptr1->link )
+						{	
+							if ( ptr1->elemento.idPersonaggio == personaggioLetto.idPersonaggio )
+							{	
+								ptr1->elemento = personaggioLetto;	
 							}
-							
 						}
-						
+					}
+				}
+			}
+			
+			// Each 10000 points, the player gets one extra life
+			if ( ( punteggio % 10000 ) == 0 && punteggio != 0 )
+			{	
+				vite++;	
+			}
+			
+			// Check if one of the ghost is in the same position of pacman
+			for ( ptr1 = listaFantasmi; ptr1 != NULL; ptr1 = ptr1->link )
+			{	
+				if ( pacman.posizione.x == ptr1->elemento.posizione.x &&
+					 pacman.posizione.y == ptr1->elemento.posizione.y && 
+					 pacman.mosso != 0 )
+				{	
+					// Kill the pacman process
+					err = kill( pacman.pid, 1 );
+					while ( err != 0 )
+					{	
+						err = kill( pacman.pid, 1 );	
 					}
 					
+					// Decrease the number of lifes
+					vite--;
+					
+					// Create a new pacman
+					generaPacman( pipeDaiPersonaggi );
+					// Energy is restored
+					energia = MAX_ENERGIA;
 				}
-				
 			}
 			
-			// Ogni 10000 punti, si ottiene una vita extra.
-			if ( ( punteggio % 10000 ) == 0 && punteggio != 0 ) {
-				
-				vite++;
-				
-			}
-			
-			// Scorro la lista dei fantasmi per controllare se Pac-Man e' nella stessa posizione di uno di questi.
-			for ( ptr1 = listaFantasmi; ptr1 != NULL; ptr1 = ptr1->link ) {
-				
-				if ( pacman.posizione.x == ptr1->elemento.posizione.x && pacman.posizione.y == ptr1->elemento.posizione.y && pacman.mosso != 0 ) {
-					
-					err = kill( pacman.pid, 1 );			// Uccide il processo Pac-Man
-					while ( err != 0 ) {
-						
-						err = kill( pacman.pid, 1 );
-						
-					}
-					
-					vite--;									// Diminuisce il numero di vite di Pac-Man
-					
-					generaPacman( pipeDaiPersonaggi );		// Crea un nuovo Pac-Man
-					energia = MAX_ENERGIA;					// Viene ripristinata l'energia
-					
-				}
-				
-			}
-			
-			// Scorro la lista dei missili per controllare se hanno colpito qualcosa.
-			for ( ptr1 = listaMissili; ptr1 != NULL; ptr1 = ptr1->link ) {
-				
-				// Controllo Pac-Man
-				if ( pacman.posizione.x == ptr1->elemento.posizione.x && pacman.posizione.y == ptr1->elemento.posizione.y ) {
-					
-					if ( pacman.mosso != 0 ) {
-						
-						if ( ptr1->elemento.creatore != 'P') {
-							
-							energia--;
-							
+			// Check if missiles hit anything
+			for ( ptr1 = listaMissili; ptr1 != NULL; ptr1 = ptr1->link )
+			{	
+				// Check pacman
+				if ( pacman.posizione.x == ptr1->elemento.posizione.x && pacman.posizione.y == ptr1->elemento.posizione.y )
+				{	
+					if ( pacman.mosso != 0 )
+					{	
+						if ( ptr1->elemento.creatore != 'P')
+						{	
+							energia--;	
 						}
-						
 					}
 					
 					err = kill( ptr1->elemento.pid, 1 );
-					while ( err != 0 ) {
-						
+					while ( err != 0 )
+					{	
 						err = kill( ptr1->elemento.pid, 1 );
-						
 					}
+					
 					cancellaDallaLista( &listaMissili, ptr1->elemento );
 					
 				}
 				
-				// Controllo i fantasmi
-				for ( ptr2 = listaFantasmi; ptr2 != NULL; ptr2 = ptr2->link ) {
-					
-					if ( ptr1->elemento.posizione.x == ptr2->elemento.posizione.x && ptr1->elemento.posizione.y == ptr2->elemento.posizione.y ) {
-						
-						if ( ptr1->elemento.creatore != 'F' ) {
-							
+				// Check the ghosts
+				for ( ptr2 = listaFantasmi; ptr2 != NULL; ptr2 = ptr2->link )
+				{	
+					if ( ptr1->elemento.posizione.x == ptr2->elemento.posizione.x && ptr1->elemento.posizione.y == ptr2->elemento.posizione.y )
+					{	
+						if ( ptr1->elemento.creatore != 'F' )
+						{	
 							err = kill( ptr2->elemento.pid, 1 );
-							while ( err != 0 ) {
-								
-								err = kill( ptr2->elemento.pid, 1);
-								
+							while ( err != 0 )
+							{	
+								err = kill( ptr2->elemento.pid, 1);	
 							}
+							
 							cancellaDallaLista( &listaFantasmi, ptr2->elemento );
 							fantasmi[ptr2->elemento.idPersonaggio] = 0;
 							
-							if ( ptr2->elemento.morto == FALSE ) {
-								
+							if ( ptr2->elemento.morto == FALSE )
+							{	
 								generaFantasma( pipeDaiPersonaggi[WRITE], trovaPipe( pipeAiFantasmi, ptr2->elemento.idPersonaggio + FANTASMI ), ptr2->elemento.idPersonaggio + FANTASMI, posizioneInizialeFantasma, TRUE );
 								fantasmi[ptr2->elemento.idPersonaggio + FANTASMI] = 1;
-								
 							}
 							
 							counterRespownFantasma[ptr2->elemento.idPersonaggio] = rand() % PASSI_RESPOWN_FANTASMA;
-							
 						}
 						
 						err = kill( ptr1->elemento.pid, 1 );
-						while ( err != 0 ) {
-							
-							err = kill( ptr1->elemento.pid, 1 );
-							
+						while ( err != 0 )
+						{	
+							err = kill( ptr1->elemento.pid, 1 );	
 						}
-						ptr1->elemento.morto = 1;
 						
+						ptr1->elemento.morto = 1;
 					}
-					
 				}
 				
-				// Controllo i missili
-				for ( ptr2 = listaMissili; ptr2 != NULL; ptr2 = ptr2->link ) {
-					
-					if ( ptr1->elemento.posizione.x == ptr2->elemento.posizione.x && ptr1->elemento.posizione.y == ptr2->elemento.posizione.y && ptr1->elemento.idPersonaggio != ptr2->elemento.idPersonaggio ) {
-						
+				// Check other missiles
+				for ( ptr2 = listaMissili; ptr2 != NULL; ptr2 = ptr2->link )
+				{	
+					if ( ptr1->elemento.posizione.x == ptr2->elemento.posizione.x &&
+						 ptr1->elemento.posizione.y == ptr2->elemento.posizione.y &&
+						 ptr1->elemento.idPersonaggio != ptr2->elemento.idPersonaggio )
+					{
 						err = kill( ptr1->elemento.pid, 1 );
-						while ( err != 0 ) {
-							
-							err = kill( ptr1->elemento.pid, 1 );
-							
+						while ( err != 0 )
+						{	
+							err = kill( ptr1->elemento.pid, 1 );	
 						}
 						ptr1->elemento.morto = 1;
 						
 						err = kill( ptr2->elemento.pid, 1 );
-						while ( err != 0 ) {
-							
-							err = kill( ptr2->elemento.pid, 1);
-							
+						while ( err != 0 )
+						{	
+							err = kill( ptr2->elemento.pid, 1);	
 						}
 						ptr2->elemento.morto = 1;
-						
 					}
-					
 				}
-				
 			}
 			
-			// Controllo se l'energia e' scesa a 0, nel qual caso Pac-Man muore.
-			if ( energia == 0 ) {	// Se l'energia di Pac-Man finisce, Pac-Man muore.
-				
-				err = kill( pacman.pid, 1 );			// Uccide il processo Pac-Man
-				while ( err != 0 ) {
-					
-					err = kill( pacman.pid, 1 );
-					
+			// If pacman's energy is 0, it dies
+			if ( energia == 0 )
+			{
+				err = kill( pacman.pid, 1 );
+				while ( err != 0 )
+				{	
+					err = kill( pacman.pid, 1 );	
 				}
 				
-				generaPacman( pipeDaiPersonaggi );		// Crea un nuovo Pac-Man
-				energia = MAX_ENERGIA;					// Viene ripristinata l'energia
-				
-				vite--;									// Diminuisce il numero di vite di Pac-Man
-				
+				// Generate a new pacman
+				generaPacman( pipeDaiPersonaggi );
+				// The energy is restores
+				energia = MAX_ENERGIA;
+				// Reduce player's life
+				vite--;
 			}
 			
-			// Controllo se Pac-Man ha mangiato abbastanza pallini per generare un fantasma.
-			if ( counterCreazioneFantasma == 0 ) {
-				
-				generaFantasma( pipeDaiPersonaggi[WRITE], trovaPipe( pipeAiFantasmi, numeroFantasmi ), numeroFantasmi, pacman.posizione, FALSE );	// Genera un fantasma
+			// Check if pacman ate the dots required to generate a ghost
+			if ( counterCreazioneFantasma == 0 )
+			{	
+				// Create a ghost
+				generaFantasma( pipeDaiPersonaggi[WRITE], trovaPipe( pipeAiFantasmi, numeroFantasmi ), numeroFantasmi, pacman.posizione, FALSE );
 				fantasmi[numeroFantasmi] = 1;
-				numeroFantasmi++;						// Aumenta il numero dei fantasmi di uno
-				counterCreazioneFantasma--;				// E fa diminuire di uno il contatore ( per evitare che vengano fatte una serie di fork() ).
 				
+				// Increase by one the number of ghosts
+				numeroFantasmi++;
+				// Decrease the counter to avoid crazy forks
+				counterCreazioneFantasma--;	
 			}
 			
-			// Controllo se il countdown per il respown dei fantasmi e' terminato.
-			for ( i = 0; i < MAX_FANTASMI; i++ ) {
-				
-				if ( counterRespownFantasma[i] == 0 ) {	// Se il contatore per la creazione del fantasma scende a zero:
-					
-					generaFantasma( pipeDaiPersonaggi[WRITE], trovaPipe( pipeAiFantasmi, i ), i, posizioneInizialeFantasma, TRUE );	// Genera un fantasma
+			// Check ghosts' respawn countdown
+			for ( i = 0; i < MAX_FANTASMI; i++ )
+			{	
+				if ( counterRespownFantasma[i] == 0 ) 
+				{
+					// If the countdown is 0, generate a ghost	
+					generaFantasma( pipeDaiPersonaggi[WRITE], trovaPipe( pipeAiFantasmi, i ), i, posizioneInizialeFantasma, TRUE );
 					fantasmi[i] = 1;
-					counterRespownFantasma[i]--;		// E fa diminuire di uno il contatore ( per evitare che vengano fatte una serie di fork() ).
-					
+					// Decrease the counter to avoid crazy forks
+					counterRespownFantasma[i]--;
 				}
-				
 			}
 			
-			// Generazione dei missili.
-			if ( personaggioLetto.missile == 1 ) {
-				
-				if ( posizioneSuccessivaConsentitaMissili( personaggioLetto.posizione.x + 2, personaggioLetto.posizione.y ) == 1 ){
-					
+			// Missile generation
+			if ( personaggioLetto.missile == 1 )
+			{	
+				if ( posizioneSuccessivaConsentitaMissili( personaggioLetto.posizione.x + 2, personaggioLetto.posizione.y ) == 1 )
+				{
 					generaMissile( pipeDaiPersonaggi[WRITE], direzioni[MISSILE_DESTRA], personaggioLetto.posizione, numeroMissili, personaggioLetto.identificatore );
-					numeroMissili++;
-					
+					numeroMissili++;	
 				}
 				
-				if ( posizioneSuccessivaConsentitaMissili( personaggioLetto.posizione.x - 2, personaggioLetto.posizione.y ) == 1 ){
-					
+				if ( posizioneSuccessivaConsentitaMissili( personaggioLetto.posizione.x - 2, personaggioLetto.posizione.y ) == 1 )
+				{	
 					generaMissile( pipeDaiPersonaggi[WRITE], direzioni[MISSILE_SINISTRA], personaggioLetto.posizione, numeroMissili, personaggioLetto.identificatore );
-					numeroMissili++;
-					
+					numeroMissili++;	
 				}
 				
-				if ( posizioneSuccessivaConsentitaMissili( personaggioLetto.posizione.x, personaggioLetto.posizione.y + 1 ) == 1 ){
-					
+				if ( posizioneSuccessivaConsentitaMissili( personaggioLetto.posizione.x, personaggioLetto.posizione.y + 1 ) == 1 )
+				{	
 					generaMissile( pipeDaiPersonaggi[WRITE], direzioni[MISSILE_GIU], personaggioLetto.posizione, numeroMissili, personaggioLetto.identificatore );
-					numeroMissili++;
-					
+					numeroMissili++;	
 				}
 				
-				if ( posizioneSuccessivaConsentitaMissili( personaggioLetto.posizione.x, personaggioLetto.posizione.y - 1 ) == 1 ){
-					
+				if ( posizioneSuccessivaConsentitaMissili( personaggioLetto.posizione.x, personaggioLetto.posizione.y - 1 ) == 1 )
+				{	
 					generaMissile( pipeDaiPersonaggi[WRITE], direzioni[MISSILE_SU], personaggioLetto.posizione, numeroMissili, personaggioLetto.identificatore );
-					numeroMissili++;
-					
+					numeroMissili++;	
 				}
-				
 			}
 			
-			vittoria = stampaPallini();	// Viene stampato il labirinto aggiornato e nella variabile vittoria viene salvato il numero dei puntini rimasti
+			// The labyrinth is updated and the number of remaining dots is saved
+			vittoria = stampaPallini();
 			
-			// Stampa dei missili e cancellazione dalla lista.
-			for ( ptr1 = listaMissili; ptr1 != NULL; ptr1 = ptr1->link ) {
-				
-				if ( ptr1->elemento.morto == 1 ){
-					
+			// Print missiles
+			for ( ptr1 = listaMissili; ptr1 != NULL; ptr1 = ptr1->link )
+			{
+				if ( ptr1->elemento.morto == 1 )
+				{	
 					mvprintw( ptr1->elemento.posizione.y + 2, ptr1->elemento.posizione.x, "%c", labirinto[ptr1->elemento.posizione.y][ptr1->elemento.posizione.x] );
 					
-					cancellaDallaLista( &listaMissili, ptr1->elemento );
-					
-				} else {
-					
-					mvprintw( ptr1->elemento.posizione.y + 2, ptr1->elemento.posizione.x, "=" );
-					
+					cancellaDallaLista( &listaMissili, ptr1->elemento );	
+				} 
+				else 
+				{	
+					mvprintw( ptr1->elemento.posizione.y + 2, ptr1->elemento.posizione.x, "=" );	
 				}
-				
 			}
 			
-			// Stampa dei fantasmi.
-			for ( ptr1 = listaFantasmi; ptr1 != NULL; ptr1 = ptr1->link ) {
-				
-				stampaFantasma ( ptr1->elemento );
-				
+			// Print the ghosts
+			for ( ptr1 = listaFantasmi; ptr1 != NULL; ptr1 = ptr1->link ) 
+			{	
+				stampaFantasma ( ptr1->elemento );	
 			}
 			
+			// Print pacman
 			attron( COLOR_PAIR( PACMAN ) );
-			stampaPacman( pacman );	// Viene stampato Pac-Man
+			stampaPacman( pacman );
 			attroff( COLOR_PAIR( PACMAN ) );
 			
-			// Stampo il numero di vite disponibili.
-			for ( i = 0; i < RIGHE; i++ ){
-				
-				mvprintw( INFO_VITE, i, " ");
-				
+			// Print the number of remaning lifes
+			for ( i = 0; i < RIGHE; i++ )
+			{	
+				mvprintw( INFO_VITE, i, " ");	
 			}
-			for ( i = 0; i < vite; i++ ){
-				
+			for ( i = 0; i < vite; i++ )
+			{	
 				attron( COLOR_PAIR( PACMAN ) );
 				mvprintw( INFO_VITE, COLONNA_VITE + ( i * 2 ), ">");
-				attroff( COLOR_PAIR( PACMAN ) );
-				
+				attroff( COLOR_PAIR( PACMAN ) );	
 			}
 			
-			// Stampo l'energia rimasta a Pac-Man
+			// Print the remaining energy
 			mvprintw( INFO_ENERGIA, COLONNA_ENERGIA, "[" );
 			mvprintw( INFO_ENERGIA, COLONNA_ENERGIA + MAX_ENERGIA + 1, "]" );
-			for ( i = 0; i < MAX_ENERGIA; i++ ) {
-				
-				mvprintw( INFO_ENERGIA, COLONNA_ENERGIA + i + 1, " " );
-				
+			for ( i = 0; i < MAX_ENERGIA; i++ )
+			{	
+				mvprintw( INFO_ENERGIA, COLONNA_ENERGIA + i + 1, " " );	
 			}
-			for ( i = 0; i < energia; i++ ) {
-				
-				mvprintw( INFO_ENERGIA, COLONNA_ENERGIA + i + 1, "=" );
-				
+			for ( i = 0; i < energia; i++ )
+			{	
+				mvprintw( INFO_ENERGIA, COLONNA_ENERGIA + i + 1, "=" );	
 			}
 			
-			// Stampo il punteggio.
+			// Print the score
 			mvprintw( INFO_PUNTEGGIO, COLONNA_PUNTEGGIO, "1UP" );
 			mvprintw( INFO_PUNTEGGIO + 1, COLONNA_PUNTEGGIO + 1, "%d", punteggio );
 			mvprintw( INFO_PUNTEGGIO, COLONNA_HIGH_SCORE, "HIGH SCORE" );
-			if ( punteggio < highScore ) {
-				
-				mvprintw( INFO_PUNTEGGIO + 1, COLONNA_HIGH_SCORE + 1, "%d", highScore );
-				
-			} else {
-				
-				mvprintw( INFO_PUNTEGGIO + 1, COLONNA_HIGH_SCORE + 1, "%d", punteggio );
-				
+			
+			if ( punteggio < highScore )
+			{	
+				mvprintw( INFO_PUNTEGGIO + 1, COLONNA_HIGH_SCORE + 1, "%d", highScore );	
+			} 
+			else
+			{	
+				mvprintw( INFO_PUNTEGGIO + 1, COLONNA_HIGH_SCORE + 1, "%d", punteggio );	
 			}
 			
-			refresh();	// Aggiorno la schermata.
-			
-		} while ( vittoria != 0 && vite > 0 );	// Ripete il ciclo finche' vittoria (ovvero il numero di puntini rimasti) e' diverso da 0 oppure finche' Pac-Man non viene toccato da un fantasma.
+			// Refresh the screen
+			refresh();
+		} 
+		while ( vittoria != 0 && vite > 0 );
+		// The cycle is repeated until the number of dots in the labyrinth is 0 or the player ends his lifes
 		
-		// Uccido Pac-Man
+		// Kill pacman process
 		err = kill( pacman.pid, 1);
-		while ( err != 0 ) {
-			
-			err = kill( pacman.pid, 1 );
-			
+		while ( err != 0 )
+		{	
+			err = kill( pacman.pid, 1 );	
 		}
 		
-		// Uccido i fantasmi
-		for ( ptr1 = listaFantasmi; ptr1 != NULL; ptr1 = ptr1->link ) {
-			
+		// Kill the ghosts processes
+		for ( ptr1 = listaFantasmi; ptr1 != NULL; ptr1 = ptr1->link )
+		{	
 			err = kill( ptr1->elemento.pid, 1 );
-			while ( err != 0 ) {
-				
-				err = kill( ptr1->elemento.pid, 1 );
-				
+			while ( err != 0 )
+			{	
+				err = kill( ptr1->elemento.pid, 1 );	
 			}
 			cancellaDallaLista( &listaFantasmi, ptr1->elemento );
-			
 		}
 		
-		// Uccido i missili
-		for ( ptr1 = listaMissili; ptr1 != NULL; ptr1 = ptr1->link ) {
-			
+		// Kill missiles processes
+		for ( ptr1 = listaMissili; ptr1 != NULL; ptr1 = ptr1->link )
+		{	
 			err = kill( ptr1->elemento.pid, 1 );
-			while ( err != 0 ) {
-				
-				err = kill( ptr1->elemento.pid, 1 );
-				
+			while ( err != 0 )
+			{	
+				err = kill( ptr1->elemento.pid, 1 );	
 			}
 			cancellaDallaLista( &listaMissili, ptr1->elemento );
-			
 		}
 		
-		// Se si e' riusciti a mangiare tutti i puntini, viene fatta l'animazione
-		if ( vittoria == 0 ) {
-			
-			fineLivello();
-			
+		// If all dots are eaten, the winning animation is shown
+		if ( vittoria == 0 )
+		{	
+			fineLivello();	
 		}
 		
-		clear();	// Viene pulito lo schermo.
+		// Clear the screen
+		clear();
 		
-		// Viene ripristinato il labirinto.
-		for ( i = 0; i < RIGHE; i++ ) {
-			
-			for ( j = 0; j < COLONNE; j++ ){
-				
-				labirinto[i][j] = labirintoBackup[i][j];
-				
+		// The labyrinth is restored from the backup
+		for ( i = 0; i < RIGHE; i++ )
+		{	
+			for ( j = 0; j < COLONNE; j++ )
+			{	
+				labirinto[i][j] = labirintoBackup[i][j];	
 			}
-			
 		}
 		
-		// Scrivo nel file il punteggio nuovo, se piu' grande di quello precedente.
-		if ( punteggio > highScore ) {
-			
+		// The high score is updated if the new score is higher
+		if ( punteggio > highScore )
+		{	
 			highScore = punteggio;
 			
 			score = fopen( FILE_PUNTEGGIO, "w" );
 			
-			if ( score != NULL ) {
-				
+			if ( score != NULL )
+			{	
 				fprintf( score, "%d", highScore);
-				fclose( score );
-				
+				fclose( score );	
 			}
-			
 		}
-		
-	} while ( vite > 0 && pacman.quit == 0 );
-	
+	} 
+	while ( vite > 0 && pacman.quit == 0 );
+	// This cycle is repeated until the player ends his lifes or quit the game
 }
 
-/***********************************************************************************
- /																					/
- /	Funzione che stampa il labirinto.												/
- /																					/
- ***********************************************************************************/
-void stampaMuri ( void ){
+// Print the labyrinth's walls
+void stampaMuri ( void )
+{	
+	int i, j;
 	
-	int i, j;	// Contatori
-	
-	//Stampo il labirinto
-	for ( i = 0; i < RIGHE; i++ ){
-		
-		for( j = 0; j < COLONNE; j++ ){
-			
-			switch( labirinto[i][j] ){
-					
+	for ( i = 0; i < RIGHE; i++ )
+	{	
+		for( j = 0; j < COLONNE; j++ )
+		{	
+			switch( labirinto[i][j] )
+			{		
 				case '<':
 					mvaddch( i + 2, j, ACS_ULCORNER );
 					break;
@@ -694,39 +660,32 @@ void stampaMuri ( void ){
 					
 				default:
 					break;
-					
 			}
-			
 		}
-		
 	}
 	
 	refresh();
-	
 }
 
-/***********************************************************************************
- /																					/
- /	Funzione che stampa i pallini.													/
- /																					/
- ***********************************************************************************/
-int stampaPallini ( void ) {
-	
-	int i, j;			// Contatori
-	int puntini = 0;	// Variabile che tiene conto di quanti puntini sono rimasti
+// Print the dots on the labyrinth
+int stampaPallini ( void )
+{	
+	int i, j;
+	// Dots counter
+	int puntini = 0;
 	
 	attron( COLOR_PAIR( PACMAN ) );
 	
-	//Stampo i pallini
-	for ( i = 0; i < RIGHE; i++ ){
-		
-		for( j = 0; j < COLONNE; j++ ){
-			
-			switch( labirinto[i][j] ){
-					
+	for ( i = 0; i < RIGHE; i++ )
+	{	
+		for( j = 0; j < COLONNE; j++ )
+		{	
+			switch( labirinto[i][j] )
+			{		
 				case '.':
 					mvaddch( i + 2, j, ACS_BULLET );
-					puntini++;	// Se stampa un puntino, incrementa questa variabile
+					// Increase the dots counter
+					puntini++;
 					break;
 					
 				case 'P':
@@ -740,26 +699,18 @@ int stampaPallini ( void ) {
 					
 				default:
 					break;
-					
 			}
-			
 		}
-		
 	}
 	
 	attroff( COLOR_PAIR( PACMAN ) );
 	
 	return puntini;
-	
 }
 
-/***********************************************************************************
- /																					/
- /	Animazione di fine livello.														/
- /																					/
- ***********************************************************************************/
-void fineLivello ( void ) {
-	
+// Winner animation
+void fineLivello ( void )
+{	
 	attron( COLOR_PAIR( LABIRINTO ) );
 	
 	stampaMuri();
@@ -790,6 +741,5 @@ void fineLivello ( void ) {
 	
 	attroff( COLOR_PAIR( LABIRINTO ) );
 	
-	usleep( 500000 );
-	
+	usleep( 500000 );	
 }

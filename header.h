@@ -3,7 +3,7 @@
 //  Missile Pacman
 //
 //  Created by Simone Barbieri on 18/08/11.
-//  Copyright 2011 odioillatino. All rights reserved.
+//  Copyright 2011 Simone Barbieri. All rights reserved.
 //
 
 #include <stdlib.h>

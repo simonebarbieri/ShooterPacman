@@ -3,30 +3,28 @@
 //  Missile Pacman
 //
 //  Created by Simone Barbieri on 18/08/11.
-//  Copyright 2011 odioillatino. All rights reserved.
+//  Copyright 2011 Simone Barbieri. All rights reserved.
 //
 
-// Struttura per le coordinate
-typedef struct {
-
-	int y; // Riga
-	int x; // Colonna
-
+// Coordinate structure
+typedef struct 
+{
+	int y; // Row
+	int x; // Column
 } coordinata;
 
-// Struttura per la direzione
-typedef struct {
-
-	int direzioney; // Movimento verticale
-	int direzionex; // Movimento orizzontale
-
+// Direction structure
+typedef struct 
+{
+	int direzioney; // Vertical direction
+	int direzionex; // Horizontal direction
 } direzione;
 
-// Struttura per i personaggi: Pac-Man, i fantasmi o i missili
-typedef struct {
-
+// Character structure: pacman, ghosts or missiles
+typedef struct 
+{
 	char identificatore;
-	char creatore;			// Solo per i missili, identifica se e' stato creato da un fantasma o da Pac-Man, per sapere chi deve uccidere.
+	char creatore;			// Missiles only, identify the creator, to know who to kill
 	coordinata posizione;
 	direzione movimento;
 	pid_t pid;
@@ -37,21 +35,19 @@ typedef struct {
 	int quit;
 	int mosso;
 	int direzioniDisponibili;
-
 } personaggio;
 
-typedef struct {
-	
+// Ghost informations structure
+typedef struct 
+{
 	int rimbalzo;
-	int powerPill;
-	
+	int powerPill;	
 } infoFantasmi;
 
-// Implementazione della lista per i missili
+// Missile list structure
 typedef struct nodo *list_pointer;
-typedef struct nodo {
-
+typedef struct nodo
+{
 	personaggio elemento;
 	list_pointer link;
-
 } elemento;
