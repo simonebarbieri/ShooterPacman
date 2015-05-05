@@ -1,0 +1,1 @@
+gcc main.c controllo.c fantasma.c missile.c pacman.c -o pacman -lncurses
