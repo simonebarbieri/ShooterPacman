@@ -225,13 +225,13 @@ void control ( void )
 					// Check if the ghost cross the path of another ghost and if it has to change direction
 					for ( ptr1 = listaFantasmi; ptr1 != NULL; ptr1 = ptr1->link )
 					{	
-						if ( personaggioLetto.idPersonaggio != ptr1->elemento.idPersonaggio &&
-							( personaggioLetto.posizione.x + personaggioLetto.movimento.direzionex == ptr1->elemento.posizione.x &&
-							  personaggioLetto.posizione.y + personaggioLetto.movimento.direzioney == ptr1->elemento.posizione.y ) ||
-							( personaggioLetto.posizione.x + personaggioLetto.movimento.direzionex == ptr1->elemento.posizione.x + ptr1->elemento.movimento.direzionex &&
-							  personaggioLetto.posizione.y + personaggioLetto.movimento.direzioney == ptr1->elemento.posizione.y + ptr1->elemento.movimento.direzioney ) || 
-							( personaggioLetto.posizione.x == ptr1->elemento.posizione.x + ptr1->elemento.movimento.direzionex &&
-							  personaggioLetto.posizione.y == ptr1->elemento.posizione.y + ptr1->elemento.movimento.direzioney ) ) 
+						if ( personaggioLetto.idPersonaggio != ptr1->elemento.idPersonaggio && (
+							 ( personaggioLetto.posizione.x + personaggioLetto.movimento.direzionex == ptr1->elemento.posizione.x &&
+							   personaggioLetto.posizione.y + personaggioLetto.movimento.direzioney == ptr1->elemento.posizione.y ) ||
+							 ( personaggioLetto.posizione.x + personaggioLetto.movimento.direzionex == ptr1->elemento.posizione.x + ptr1->elemento.movimento.direzionex &&
+							   personaggioLetto.posizione.y + personaggioLetto.movimento.direzioney == ptr1->elemento.posizione.y + ptr1->elemento.movimento.direzioney ) || 
+							 ( personaggioLetto.posizione.x == ptr1->elemento.posizione.x + ptr1->elemento.movimento.direzionex &&
+							   personaggioLetto.posizione.y == ptr1->elemento.posizione.y + ptr1->elemento.movimento.direzioney ) ) )
 						{
 							info[personaggioLetto.idPersonaggio].rimbalzo = 1;	
 						}

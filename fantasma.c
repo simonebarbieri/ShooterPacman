@@ -170,8 +170,8 @@ int posizioneSuccessivaConsentita ( int x, int y )
 }
 
 // Compute the number of possible direction from the selected position
-int calcoloBivio ( int x, int y ){
-
+int calcoloBivio ( int x, int y )
+{
 	int i = 0;
 
 	if ( posizioneSuccessivaConsentita( x + 2, y ) == 1 )
@@ -192,12 +192,11 @@ int calcoloBivio ( int x, int y ){
 	}
 
 	return i;
-
 }
 
 // Establishes the new direction of the ghost
-direzione sceltaPercorso( int x, int y, int direzioniDisponibili ){
-
+direzione sceltaPercorso( int x, int y, int direzioniDisponibili )
+{
 	int i = 0, r;
 	// An array with the possible directions
 	direzione percorsoPossibile[direzioniDisponibili];
